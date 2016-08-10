@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
+
 
 #include "translate_utils.h"
 
@@ -58,9 +61,32 @@ int translate_num(long int* output, const char* str, long int lower_bound,
     if (!str || !output) {
         return -1;
     }
-    /* YOUR CODE HERE */
 
-    return -1;
+    long val;
+    char *endptr;
+    int base = 0;
+    errno = 0;    /* To distinguish success/failure after call */
+    val = strtol(str, &endptr, base);
+
+     /* Check for various possible errors */
+
+   if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+            || (errno != 0 && val == 0)) {
+      return -1; // String format is not numeric
+    }
+
+    if (endptr == str || *endptr) {
+        return -1; // No digits were found
+    }
+
+    if (!(lower_bound <= val && val <= upper_bound)) {
+      return -1; // the value is out of bounds
+    }
+
+    *output = val;
+
+
+    return 0;
 }
 
 /* Translates the register name to the corresponding register number. Please
@@ -69,11 +95,29 @@ int translate_num(long int* output, const char* str, long int lower_bound,
    Returns the register number of STR or -1 if the register name is invalid.
  */
 int translate_reg(const char* str) {
-    if (strcmp(str, "$zero") == 0)      return 0;
+    if      (strcmp(str, "$zero") == 0) return 0;
     else if (strcmp(str, "$0") == 0)    return 0;
     else if (strcmp(str, "$at") == 0)   return 1;
     else if (strcmp(str, "$v0") == 0)   return 2;
+
     else if (strcmp(str, "$a0") == 0)   return 4;
-    /* YOUR CODE HERE */
-    else                                return 0;
+    else if (strcmp(str, "$a1") == 0)   return 5;
+    else if (strcmp(str, "$a2") == 0)   return 6;
+    else if (strcmp(str, "$a3") == 0)   return 7;
+
+    else if (strcmp(str, "$t0") == 0)   return 8;
+    else if (strcmp(str, "$t1") == 0)   return 9;
+    else if (strcmp(str, "$t2") == 0)   return 10;
+    else if (strcmp(str, "$t3") == 0)   return 11;
+
+    else if (strcmp(str, "$s0") == 0)   return 16;
+    else if (strcmp(str, "$s1") == 0)   return 17;
+    else if (strcmp(str, "$s2") == 0)   return 18;
+    else if (strcmp(str, "$s3") == 0)   return 19;
+
+    else if (strcmp(str, "$sp") == 0)   return 29;
+    else if (strcmp(str, "$ra") == 0)   return 31;
+
+
+    else                                return -1;
 }
