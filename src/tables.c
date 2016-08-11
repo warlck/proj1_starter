@@ -41,13 +41,31 @@ void write_symbol(FILE* output, uint32_t addr, const char* name) {
    to store this value for use during add_to_table().
  */
 SymbolTable* create_table(int mode) {
-    /* YOUR CODE HERE */
-    return NULL;
+    SymbolTable *st = (SymbolTable *) malloc(sizeof(SymbolTable));
+    if (st == NULL) 
+      allocation_failed();
+
+    Symbol *tbl = (Symbol *) malloc(4*sizeof(Symbol));
+    if (tbl == NULL)
+      allocation_failed();
+
+    st->tbl = tbl;
+    st->cap = 4;
+    st->len = 0;
+    st->mode = mode;
+
+    return st;
 }
 
 /* Frees the given SymbolTable and all associated memory. */
 void free_table(SymbolTable* table) {
-    /* YOUR CODE HERE */
+    if (!table) return;
+    for (int i = 0; i < table->len; i++) {
+      Symbol *sym = table->tbl + i;
+      free(sym->name);
+    }
+    free(table->tbl);
+    free(table);
 }
 
 /* Adds a new symbol and its address to the SymbolTable pointed to by TABLE. 
@@ -65,21 +83,83 @@ void free_table(SymbolTable* table) {
    Otherwise, you should store the symbol name and address and return 0.
  */
 int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
-    /* YOUR CODE HERE */
-    return -1;
+    if (!table) return -1;
+
+    
+
+
+    if (addr%4 != 0) {
+      addr_alignment_incorrect();
+      return -1;
+    }
+
+
+    
+    
+  
+
+    if (table->mode == SYMTBL_UNIQUE_NAME) {
+      uint32_t address = get_addr_for_symbol(table, name);
+      if (address != -1) {
+        name_already_exists(name);
+        return -1;
+      }
+    } 
+    
+    // printf("\n");
+    // printf("__DEBUG__\n");
+    // printf("name is %s, addr is %d\n", name, addr);
+    // printf("table len is %d, cap is %d\n", table->len, table->cap);
+
+    if (table->len == table->cap) {
+      table->tbl = realloc(table->tbl, table->cap*2*sizeof(Symbol));
+      if (!table->tbl) {
+        allocation_failed();
+      }
+      table->cap *= 2;
+      // printf("After realloc \n");
+    }
+
+
+    Symbol *sym = table->tbl + table->len;
+    sym->name = malloc(strlen(name) + 1);
+    if (!sym->name) {
+      allocation_failed();
+    }
+
+    strcpy(sym->name, name);
+    sym->addr = addr;
+    table->len++;
+
+
+    return 0;
 }
 
 /* Returns the address (byte offset) of the given symbol. If a symbol with name
    NAME is not present in TABLE, return -1.
  */
 int64_t get_addr_for_symbol(SymbolTable* table, const char* name) {
-    /* YOUR CODE HERE */
-    return -1;   
+    if (!table) return -1;
+    uint32_t addr = -1;
+    Symbol *tbl = table->tbl;
+
+    for (int i = 0; i < table->len; i++) {
+       char *symbol_name = (tbl+i)->name;
+       if (strcmp(name, symbol_name) == 0) {
+          addr = (tbl+i)->addr;
+          break;
+       }
+    }
+    return addr;  
 }
 
 /* Writes the SymbolTable TABLE to OUTPUT. You should use write_symbol() to
    perform the write. Do not print any additional whitespace or characters.
  */
 void write_table(SymbolTable* table, FILE* output) {
-    /* YOUR CODE HERE */
+    if (!table) return;
+    for (int i = 0; i < table->len; i++) {
+      Symbol *sym = table->tbl + i;
+      write_symbol(output, sym->addr, sym->name);
+    }
 }
