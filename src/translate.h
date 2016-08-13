@@ -34,4 +34,8 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args,
 int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, 
     uint32_t addr, SymbolTable* reltbl);
 
+int is_valid_register(int val);
+
+int make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt);
+
 #endif

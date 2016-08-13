@@ -151,13 +151,67 @@ void test_table_2() {
 
     free_table(tbl);
 }
+/****************************************
+ *  Test cases for translate.c
+ ****************************************/
+
+void compare_written_instruction_to(char* str) {
+    char line[32];
+    FILE* test = fopen("test", "r");
+    fgets(line, sizeof(line), test);
+    CU_ASSERT(strncmp(line, str, 8) == 0);
+    fclose(test);
+}
+
+void test_translate_1() {
+    // test rtype  and sll instruction translations
+    
+    char *name;
+    int res;
+    FILE *test;
+    char* args[3] = {"$s0", "$a0", "$t0"};
+
+    
+    name = "addu";
+    size_t num_args = 3;
+    uint32_t addr = 0;
+    SymbolTable *symtbl = NULL;
+    SymbolTable *reltbl = NULL;
+
+    test = fopen("test", "w");
+    res = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);   
+    compare_written_instruction_to("00888021");
+    
+
+
+
+    name = "sll";
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    args[2] = "16";
+    res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("00048400");
+
+
+
+
+
+}
+
+
 
 /****************************************
  *  Add your test cases here
  ****************************************/
 
 int main(int argc, char** argv) {
-    CU_pSuite pSuite1 = NULL, pSuite2 = NULL;
+    CU_pSuite pSuite1 = NULL, pSuite2 = NULL, pSuite3 = NULL ;
 
     if (CUE_SUCCESS != CU_initialize_registry()) {
         return CU_get_error();
@@ -184,6 +238,14 @@ int main(int argc, char** argv) {
         goto exit;
     }
     if (!CU_add_test(pSuite2, "test_table_2", test_table_2)) {
+        goto exit;
+    }
+
+    pSuite3  =  CU_add_suite("Testing translate.c", NULL, NULL);
+    if (!pSuite3) {
+        goto exit;
+    }
+    if (!CU_add_test(pSuite3, "test_translate_1", test_translate_1)) {
         goto exit;
     }
 

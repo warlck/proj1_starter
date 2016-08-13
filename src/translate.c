@@ -91,15 +91,25 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
  */
 int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
     // Perhaps perform some error checking?
+    if (num_args != 3) return -1;
 
+    int valid_register = 1;
     int rd = translate_reg(args[0]);
     int rs = translate_reg(args[1]);
     int rt = translate_reg(args[2]);
+    int shamt = 0;
 
-    uint32_t instruction = 0;
+    valid_register &= is_valid_register(rd);
+    valid_register &= is_valid_register(rs);
+    valid_register &= is_valid_register(rt);
+    if (!valid_register) return -1;
+
+    // printf("rd = %d, rs  = %d, rt = %d \n", rd,rs, rt);
+    int instruction = make_rtype_instruction(funct, rd, rs, rt, shamt);
     write_inst_hex(output, instruction);
     return 0;
 }
+
 
 /* A helper function for writing shift instructions. You should use 
    translate_num() to parse numerical arguments. translate_num() is defined
@@ -110,13 +120,51 @@ int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
  */
 int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
 	// Perhaps perform some error checking?
-
+    if (num_args != 3) return -1;
     long int shamt;
+    int rs = 0;
     int rd = translate_reg(args[0]);
     int rt = translate_reg(args[1]);
     int err = translate_num(&shamt, args[2], 0, 31);
 
-    uint32_t instruction = 0;
+    if (err == -1 || !is_valid_register(shamt)) return -1;
+
+
+
+    uint32_t instruction = make_rtype_instruction(funct, rd, rs, rt, shamt);
     write_inst_hex(output, instruction);
     return 0;
+}
+
+
+int is_valid_register(int val) {
+  if (val < 0 || val > 31)
+    return 0;
+  return 1;
+} 
+
+
+
+int make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt) {
+  int instruction = 0;
+  instruction <<= 6; // opcode field is 0
+
+  
+  instruction <<= 5; // set the bits of rs field 
+  instruction |= rs;
+ 
+  instruction <<= 5; // set the bits of rt field
+  instruction |= rt;
+
+  instruction <<= 5; // set the buts of rd field
+  instruction |= rd;
+  
+ 
+  instruction <<=5; // set shamt bits 
+  instruction |= shamt;
+
+  instruction <<=6;
+  instruction |= funct; // set the func field bits
+
+  return instruction;
 }
