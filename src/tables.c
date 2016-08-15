@@ -85,18 +85,12 @@ void free_table(SymbolTable* table) {
 int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
     if (!table) return -1;
 
-    
-
-
+  
     if (addr%4 != 0) {
       addr_alignment_incorrect();
       return -1;
     }
 
-
-    
-    
-  
 
     if (table->mode == SYMTBL_UNIQUE_NAME) {
       uint32_t address = get_addr_for_symbol(table, name);
@@ -140,7 +134,7 @@ int add_to_table(SymbolTable* table, const char* name, uint32_t addr) {
  */
 int64_t get_addr_for_symbol(SymbolTable* table, const char* name) {
     if (!table) return -1;
-    uint32_t addr = -1;
+    int64_t addr = -1;
     Symbol *tbl = table->tbl;
 
     for (int i = 0; i < table->len; i++) {

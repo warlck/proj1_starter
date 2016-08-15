@@ -3,7 +3,11 @@ n:      .word 9
 
 
         .text
-main: 	sll	      $s0, $a0, 16 
+main: 	sw	$s0,   -100($a0)
+	bne	$s0, $a0, fib
+	sll	$s0, $a0, 16 
+	jr	$s0
+	addiu	$s0, $a0, -100
 	      addi    $t1, $zero, 1
 	      la      $t3, n
 	      lw      $t3, 0($t3)

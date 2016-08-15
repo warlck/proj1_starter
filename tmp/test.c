@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "../src/tables.h"
 #include "../src/translate.h"
-
+#include <stdint.h>
 
 
 int main() {
@@ -45,19 +45,26 @@ int main() {
  //    free_table(tbl);
 
 	FILE *test = fopen("test", "w");
-	char *name = "sll";
+	char *name = "beq";
 	char *rd = "$s0";
 	char *rs = "$a0";
-	char *rt = "$t0"; 
-	char* args[3] = {"$s0", "$a0", "16"};
+	char *rt = "-100"; 
+	char* args[3] = {"$s0", "$a0", "fib"};
 
+	// long int  num = -1;
+	// // num = UINT16_MAX;
+	// printf("size of uint16_t is %lu\n", sizeof(num));
+	// printf("uint16 max is %ld \n", num);
 
-	SymbolTable *symtbl = NULL;
+	SymbolTable *symtbl = create_table(SYMTBL_UNIQUE_NAME);
+    add_to_table(symtbl, "fib", 0x00400024);
 	SymbolTable *reltbl = NULL;
 	size_t num_args = 3;
-	uint32_t addr = 0;
+	uint32_t addr = 0x00400004;
+	printf("imm is %d\n", (0x00400024 - (addr + 4))>>2 );
 	int res = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
-	printf("result of execution is %d\n",res);
+
+	printf  ("result of execution is %d\n",res);
 	fclose(test);
 
 

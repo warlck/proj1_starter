@@ -183,15 +183,13 @@ void test_translate_1() {
     CU_ASSERT_NOT_EQUAL(res, -1);
     fclose(test);   
     compare_written_instruction_to("00888021");
-    
 
 
-
+    /***********************/
     name = "sll";
     test = fopen("test", "w");
     res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
     CU_ASSERT_EQUAL(res, -1);
-
     args[2] = "16";
     res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
     CU_ASSERT_NOT_EQUAL(res, -1);
@@ -199,10 +197,288 @@ void test_translate_1() {
     compare_written_instruction_to("00048400");
 
 
+    /***********************/
+    name = "jr";
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
 
-
+    num_args = 1;
+    res  = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("02000008");
 
 }
+
+
+void test_translate_2() {
+    // test itype and offset based instruction translations
+    
+    char *name;
+    int res;
+    FILE *test;
+
+    size_t num_args = 0;
+    uint32_t addr = 0;
+    SymbolTable *symtbl = NULL;
+    SymbolTable *reltbl = NULL;
+
+
+    /***********************/
+    name = "addiu";
+    num_args = 1;
+    char *args_addiu[3] = {"$s0", "$a0", "$t0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_addiu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    num_args = 3;
+    res  = translate_inst(test, name, args_addiu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_addiu[2] = "-100";
+    num_args = 3;
+    res  = translate_inst(test, name, args_addiu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("2490ff9c");
+
+
+
+    /***********************/
+    name = "ori";
+    num_args = 1;
+    char *args_ori[3] = {"$s0", "$a0", "$t0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_ori, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    num_args = 3;
+    args_ori[2] = "-100";
+    res  = translate_inst(test, name, args_ori, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_ori[2] = "100";
+    num_args = 3;
+    res  = translate_inst(test, name, args_ori, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("34900064");
+
+
+    /***********************/
+    name = "lui";
+    num_args = 2;
+    char *args_lui[3] = {"$s0", "$a0", "$t0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_lui, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_lui[1] = "-100";
+    res  = translate_inst(test, name, args_lui, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_lui[1] = "100";
+    res  = translate_inst(test, name, args_lui, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("3c100064");
+
+
+    /***********************/
+    name = "lb";
+    num_args = 3;
+    char *args_lb[3] = {"$s0", "$t0", "$a0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_lb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_lb[1] = "65536";
+    res  = translate_inst(test, name, args_lb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_lb[1] = "-100";
+    res  = translate_inst(test, name, args_lb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("8090ff9c");
+
+
+
+
+    /***********************/
+    name = "lbu";
+    num_args = 3;
+    char *args_lbu[3] = {"$s0", "$t0", "$a0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_lbu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_lbu[1] = "65536";
+    res  = translate_inst(test, name, args_lbu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_lbu[1] = "-100";
+    res  = translate_inst(test, name, args_lbu, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("9090ff9c");
+
+
+    /***********************/
+    name = "lw";
+    num_args = 3;
+    char *args_lw[3] = {"$s0", "$t0", "$a0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_lw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_lw[1] = "65536";
+    res  = translate_inst(test, name, args_lw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_lw[1] = "-100";
+    res  = translate_inst(test, name, args_lw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("8c90ff9c");
+
+
+    /***********************/
+    name = "sb";
+    num_args = 3;
+    char *args_sb[3] = {"$s0", "$t0", "$a0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_sb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_sb[1] = "-65536";
+    res  = translate_inst(test, name, args_sb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_sb[1] = "100";
+    res  = translate_inst(test, name, args_sb, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("a0900064");
+
+
+
+    /***********************/
+    name = "sw";
+    num_args = 3;
+    char *args_sw[3] = {"$s0", "$t0", "$a0"};
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_sw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_sw[1] = "-65536";
+    res  = translate_inst(test, name, args_sw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    args_sw[1] = "-100";
+    res  = translate_inst(test, name, args_sw, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    compare_written_instruction_to("ac90ff9c");
+
+}
+
+
+void test_translate_3() {
+    // test branch and jump instruction translations
+    
+    char *name;
+    int res;
+    FILE *test;
+
+    size_t num_args = 0;
+    uint32_t addr = 0;
+    SymbolTable *symtbl = NULL;
+    SymbolTable *reltbl = NULL;
+
+
+    /***********************/
+    name = "beq";
+    addr = 0;
+    symtbl = create_table(SYMTBL_UNIQUE_NAME);
+    add_to_table(symtbl, "fib", 0x00400024);
+    num_args = 3;
+    char *args_beq[3] = {"$s0", "$a0", "$a0"};
+
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_beq, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_beq[2] = "fib";
+    res  = translate_inst(test, name, args_beq, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    addr = 0x00400004;
+    res  = translate_inst(test, name, args_beq, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    free_table(symtbl);
+    compare_written_instruction_to("12040007");
+
+
+
+
+    /***********************/
+    name = "bne";
+    addr = 0;
+    symtbl = create_table(SYMTBL_UNIQUE_NAME);
+    add_to_table(symtbl, "fib", 0x00400024);
+    num_args = 3;
+    char *args_bne[3] = {"$s0", "$a0", "$a0"};
+
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_bne, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+    
+    args_bne[2] = "fib";
+    res  = translate_inst(test, name, args_bne, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    addr = 0x00400004;
+    res  = translate_inst(test, name, args_bne, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    fclose(test);
+    free_table(symtbl);
+    compare_written_instruction_to("16040007");
+
+}
+
+
 
 
 
@@ -246,6 +522,13 @@ int main(int argc, char** argv) {
         goto exit;
     }
     if (!CU_add_test(pSuite3, "test_translate_1", test_translate_1)) {
+        goto exit;
+    }
+
+    if (!CU_add_test(pSuite3, "test_translate_2", test_translate_2)) {
+        goto exit;
+    }
+    if (!CU_add_test(pSuite3, "test_translate_3", test_translate_3)) {
         goto exit;
     }
 

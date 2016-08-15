@@ -36,6 +36,14 @@ int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args,
 
 int is_valid_register(int val);
 
-int make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt);
+int is_valid_signed_immediate(long int imm);
+
+uint32_t make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt);
+
+uint32_t make_itype_instruction(uint8_t opcode, int rs, int rt, uint16_t imm);
+
+int write_signed_imm(uint8_t opcode, FILE* output, char** args, size_t num_args);
+
+int write_unsigned_imm(uint8_t opcode, FILE* output, char** args, size_t num_args);
 
 #endif

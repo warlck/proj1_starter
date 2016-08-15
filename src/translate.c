@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "tables.h"
 #include "translate_utils.h"
@@ -78,9 +79,24 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
     else if (strcmp(name, "slt") == 0)   return write_rtype (0x2a, output, args, num_args);
     else if (strcmp(name, "sltu") == 0)  return write_rtype (0x2b, output, args, num_args);
     else if (strcmp(name, "sll") == 0)   return write_shift (0x00, output, args, num_args);
+    else if (strcmp(name, "jr") == 0)    return write_jr    (0x08, output, args, num_args);
+    else if (strcmp(name, "addiu") == 0) return write_addiu (0x09, output, args, num_args);
+    else if (strcmp(name, "ori") == 0)   return write_ori   (0x0d, output, args, num_args);
+    else if (strcmp(name, "lui") == 0)   return write_lui   (0x0f, output, args, num_args);
+    else if (strcmp(name, "lb") == 0)    return write_mem   (0x20, output, args, num_args);
+    else if (strcmp(name, "lbu") == 0)   return write_mem   (0x24, output, args, num_args);
+    else if (strcmp(name, "lw") == 0)    return write_mem   (0x23, output, args, num_args);
+    else if (strcmp(name, "sb") == 0)    return write_mem   (0x28, output, args, num_args);
+    else if (strcmp(name, "sw") == 0)    return write_mem   (0x2b, output, args, num_args);
+    else if (strcmp(name, "beq") == 0)   return write_branch(0x04, output, args, num_args, addr, symtbl);
+    else if (strcmp(name, "bne") == 0)   return write_branch(0x05, output, args, num_args, addr, symtbl);
+    // else if  
     /* YOUR CODE HERE */
     else                                 return -1;
 }
+
+
+
 
 /* A helper function for writing most R-type instructions. You should use
    translate_reg() to parse registers and write_inst_hex() to write to 
@@ -120,22 +136,152 @@ int write_rtype(uint8_t funct, FILE* output, char** args, size_t num_args) {
  */
 int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
 	// Perhaps perform some error checking?
-    if (num_args != 3) return -1;
-    long int shamt;
-    int rs = 0;
-    int rd = translate_reg(args[0]);
-    int rt = translate_reg(args[1]);
-    int err = translate_num(&shamt, args[2], 0, 31);
+  if (num_args != 3) return -1;
+  long int shamt;
+  int rs = 0;
+  int rd = translate_reg(args[0]);
+  int rt = translate_reg(args[1]);
+  int err = translate_num(&shamt, args[2], 0, 31);
 
-    if (err == -1 || !is_valid_register(shamt)) return -1;
+  if (err == -1) return -1;
 
-
-
-    uint32_t instruction = make_rtype_instruction(funct, rd, rs, rt, shamt);
-    write_inst_hex(output, instruction);
-    return 0;
+  uint32_t instruction = make_rtype_instruction(funct, rd, rs, rt, shamt);
+  write_inst_hex(output, instruction);
+  return 0;
 }
 
+
+int write_jr(uint8_t funct, FILE* output, char** args, size_t num_args) {
+  if (num_args != 1) return -1;
+  int shamt = 0;
+  int rd = 0;
+  int rt = 0;
+  int rs = translate_reg(args[0]);
+  if (!is_valid_register(rs)) return -1;
+
+  uint32_t instruction  = make_rtype_instruction(funct, rd, rs, rt, shamt);
+  write_inst_hex(output, instruction);
+  return 0;
+}
+
+
+
+int write_lui(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+  if (num_args != 2) return -1;
+  char *temp_args[3] = {args[0], "$0", args[1]};
+  num_args = 3;
+  return write_unsigned_imm(opcode, output, temp_args, num_args);
+}
+
+
+
+int write_addiu(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+  return write_signed_imm(opcode, output, args, num_args);
+}
+
+
+int write_signed_imm(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+  if (num_args != 3) return -1;
+  long int imm;
+  int16_t min  = INT16_MIN; // min signed 16 bit integer
+  int16_t max =  INT16_MAX; // max signed 16 bit integer
+  int rt = translate_reg(args[0]);
+  int rs = translate_reg(args[1]);
+  int err = translate_num(&imm, args[2], min, max);
+
+  if (err == -1) return -1;
+  uint32_t instruction = make_itype_instruction(opcode, rs, rt, imm);
+  write_inst_hex(output, instruction);
+  return 0;
+}
+
+
+
+int write_ori(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+   return write_unsigned_imm(opcode, output, args, num_args);
+}
+
+
+int write_unsigned_imm(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+  if (num_args != 3) return -1;
+  uint16_t max = UINT16_MAX; 
+  long int imm;
+  int rt = translate_reg(args[0]);
+  int rs = translate_reg(args[1]);
+  int err  = translate_num(&imm, args[2], 0, max);
+  if (err == -1) return -1;
+
+  uint32_t instruction = make_itype_instruction(opcode, rs, rt, imm);
+  write_inst_hex(output, instruction);
+  return 0;
+}
+
+
+
+int write_mem(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+  char *temp_args[3] = {args[0], args[2], args[1]};
+  return write_signed_imm(opcode, output, temp_args, num_args);
+}
+
+
+
+
+
+
+
+uint32_t make_itype_instruction(uint8_t opcode, int rs, int rt, uint16_t imm) {
+  uint32_t instruction = 0;
+
+  instruction <<= 6;
+  instruction |= opcode;
+
+  instruction <<= 5; // set the bits of rs field
+  instruction |= rs;
+
+  instruction <<= 5; // set the bits of the rt field
+  instruction |= rt;
+
+  instruction <<= 16; // set the bits of 16 bit imm field
+  instruction |= imm;
+
+  return instruction;
+}
+
+
+
+int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args, 
+    uint32_t addr, SymbolTable* symtbl) {
+  if (num_args != 3) return -1;
+  int rs = translate_reg(args[0]);
+  int rt = translate_reg(args[1]);
+
+  char *label = args[2];
+  int64_t label_addr = get_addr_for_symbol(symtbl, label);
+  if (label_addr == -1) return -1; 
+
+  int64_t offset = label_addr - (addr + 4);
+  offset >>= 2;  // calculates the immediate value that will be offset field for branch instruction
+  if (!is_valid_signed_immediate(offset)) return -1;
+
+  uint32_t instruction = make_itype_instruction(opcode, rs, rt, offset);
+  write_inst_hex(output, instruction);
+  return 0;
+}
+
+
+
+
+
+// int write_itype(uint8_t opcode, FILE* output, char** args, size_t num_args) {
+//   if (num_args != 3) return -1;
+//   long imm;
+//   int16_t min  = INT16_MIN; // min signed 16 bit integer
+//   int16_t max =  INT16_MAX; // max signed 16 bit integer
+//   int rt = translate_reg(args[0]);
+//   int rs = translate_reg(args[1]);
+//   int err = translate_num(&imm, args[2], min, max)
+
+// }
 
 int is_valid_register(int val) {
   if (val < 0 || val > 31)
@@ -144,9 +290,19 @@ int is_valid_register(int val) {
 } 
 
 
+int is_valid_signed_immediate(long int imm) {
+  int16_t min  = INT16_MIN;
+  int16_t max =  INT16_MAX;
+  if (imm < min || imm > max) return 0;
+  return 1;
+}
 
-int make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt) {
-  int instruction = 0;
+
+
+uint32_t make_rtype_instruction(uint8_t funct, int rd, int rs, int rt, int shamt) {
+   // printf("rd = %d, rs  = %d, rt = %d \n", rd,rs, rt);
+
+  uint32_t instruction = 0;
   instruction <<= 6; // opcode field is 0
 
   
