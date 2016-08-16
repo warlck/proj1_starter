@@ -90,8 +90,8 @@ int translate_inst(FILE* output, const char* name, char** args, size_t num_args,
     else if (strcmp(name, "sw") == 0)    return write_mem   (0x2b, output, args, num_args);
     else if (strcmp(name, "beq") == 0)   return write_branch(0x04, output, args, num_args, addr, symtbl);
     else if (strcmp(name, "bne") == 0)   return write_branch(0x05, output, args, num_args, addr, symtbl);
-    // else if  
-    /* YOUR CODE HERE */
+    else if (strcmp(name, "j") == 0)     return write_jump  (0x02, output, args, num_args, addr, reltbl);
+    else if (strcmp(name, "jal") == 0)   return write_jump  (0x03, output, args, num_args, addr, reltbl);
     else                                 return -1;
 }
 
@@ -269,6 +269,18 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args,
 }
 
 
+int write_jump(uint8_t opcode, FILE* output, char** args, size_t num_args, 
+    uint32_t addr, SymbolTable* reltbl) {
+  if (num_args != 1) return -1;
+  
+  int err = add_to_table(reltbl, args[0], addr);
+  if (err == -1) return -1;
+  uint32_t instruction = make_itype_instruction(opcode, 0, 0 , 0);
+  write_inst_hex(output, instruction);
+  return 0;
+}
+
+
 
 
 
@@ -296,6 +308,7 @@ int is_valid_signed_immediate(long int imm) {
   if (imm < min || imm > max) return 0;
   return 1;
 }
+
 
 
 

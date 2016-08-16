@@ -476,6 +476,29 @@ void test_translate_3() {
     free_table(symtbl);
     compare_written_instruction_to("16040007");
 
+    
+    /***********************/
+    name = "jal";
+    addr = 0;
+    reltbl = create_table(SYMTBL_UNIQUE_NAME);
+    num_args = 3;
+    char *args_jal[3] = {"fib", "$a0", "$a0"};
+
+    test = fopen("test", "w");
+    res  = translate_inst(test, name, args_jal, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_EQUAL(res, -1);
+
+
+
+    num_args = 1;
+    addr = 0x00400004;
+    res  = translate_inst(test, name, args_jal, num_args, addr, symtbl, reltbl);
+    CU_ASSERT_NOT_EQUAL(res, -1);
+    CU_ASSERT_EQUAL(get_addr_for_symbol(reltbl, args_jal[0]), addr);
+    fclose(test);
+    free_table(reltbl);
+    compare_written_instruction_to("0c000000");
+
 }
 
 
