@@ -505,12 +505,70 @@ void test_translate_3() {
 
 
 
+void test_translate_4() {
+    // test branch and jump instruction translations
+    
+    char *name;
+    int res;
+    FILE *test;
+    size_t num_args = 0;
+
+    /***********************/
+    name = "li";
+    num_args = 2;
+    char *args_li[3] = {"$s0", "4294967296"};
+
+    test = fopen("test", "w");
+    res  = write_pass_one(test, name, args_li, num_args);
+    CU_ASSERT_EQUAL(res, 0);
+
+
+
+    args_li[1] = "2147483647";
+    res  = write_pass_one(test, name, args_li, num_args);
+    CU_ASSERT_EQUAL(res, 2);
+    fclose(test);
+    compare_written_instruction_to("lui $at 00007fff");
+
+    test = fopen("test", "w");
+    args_li[1] = "-100";
+    res  = write_pass_one(test, name, args_li, num_args);
+    CU_ASSERT_EQUAL(res, 1);
+    fclose(test);
+    compare_written_instruction_to("addiu $s0 $0 -100");
+
+
+
+
+    /***********************/
+    name = "blt";
+    num_args = 2;
+    char *args_blt[3] = {"$s0", "$a0", "fib"};
+
+    test = fopen("test", "w");
+    res  = write_pass_one(test, name, args_blt, num_args);
+    CU_ASSERT_EQUAL(res, 0);
+
+
+
+    num_args = 3;
+    res  = write_pass_one(test, name, args_blt, num_args);
+    CU_ASSERT_EQUAL(res, 2);
+    fclose(test);
+    compare_written_instruction_to("slt $t0 $s0 $a0");
+
+
+}
+
+
+
+
 /****************************************
  *  Add your test cases here
  ****************************************/
 
 int main(int argc, char** argv) {
-    CU_pSuite pSuite1 = NULL, pSuite2 = NULL, pSuite3 = NULL ;
+    CU_pSuite pSuite1 = NULL, pSuite2 = NULL, pSuite3 = NULL, pSuite4 = NULL ;
 
     if (CUE_SUCCESS != CU_initialize_registry()) {
         return CU_get_error();
@@ -552,6 +610,15 @@ int main(int argc, char** argv) {
         goto exit;
     }
     if (!CU_add_test(pSuite3, "test_translate_3", test_translate_3)) {
+        goto exit;
+    }
+
+
+    pSuite4  =  CU_add_suite("Testing psedoinstructions in translate.c", NULL, NULL);
+    if (!pSuite3) {
+        goto exit;
+    }
+    if (!CU_add_test(pSuite4, "test_translate_4", test_translate_4)) {
         goto exit;
     }
 

@@ -4,6 +4,7 @@ n:      .word 9
 
         .text
 main: 	sw	$s0,   -100($a0)
+	li      $s0, 2147483647
 	j  	fib
 	bne	$s0, $a0, fib
 	sll	$s0, $a0, 16 

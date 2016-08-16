@@ -41,16 +41,71 @@
  */
 unsigned write_pass_one(FILE* output, const char* name, char** args, int num_args) {
     if (strcmp(name, "li") == 0) {
-        /* YOUR CODE HERE */
-        return 0;
+        return write_li(output, args, num_args);
     } else if (strcmp(name, "blt") == 0) {
         /* YOUR CODE HERE */
-        return 0;
+        return write_blt(output, args, num_args);
     } else {
         write_inst_string(output, name, args, num_args);
         return 1;
     }
 }
+
+int write_li(FILE *output, char **args, int num_args)  {
+  if (num_args != 2) return 0;
+  int32_t min  = INT32_MIN;
+  int32_t max =  INT32_MAX;
+  int32_t immediate;
+  int err = translate_num(&immediate, args[1], min, max);
+
+  if (err == -1) return 0;
+
+  if (is_valid_signed_16_bit(immediate)) { 
+    char *name = "addiu";
+    char *args_temp[3] = {args[0], "$0", args[1]};
+    num_args = 3;
+    write_inst_string(output, name, args_temp, num_args);
+    return 1;
+  } 
+
+
+  // expand to lui and ori
+  // prepare the lui args and write it down to output
+  char *name = "lui";
+  uint32_t imm = immediate & 0xffff0000;
+  imm >>= 16;
+  char lui_imm_str[32];
+  int n  = sprintf(lui_imm_str, "%08x", imm);
+  if (n < 0) return 0;
+
+  char *args_lui[3] = {"$at", lui_imm_str};
+  num_args = 2;
+  write_inst_string(output, name, args_lui, num_args);
+
+  // prepare the ori args and write it down to output
+  name = "ori";
+  imm = immediate & 0x0000ffff;
+  char ori_imm_str[32];
+  int m = sprintf(ori_imm_str, "%08x", imm);
+  if (m < 0) return 0;
+
+  char *args_ori[3] = {args[0], "$at", ori_imm_str};
+  num_args = 3;
+  write_inst_string(output, name, args_ori, num_args);
+  return 2;
+}
+
+
+
+int write_blt(FILE *output, char **args, int num_args) {
+  if (num_args!= 3) return 0;
+  char *args_slt[3] = {"$t0", args[0], args[1]};
+  char *args_bne[3] = {"$t0", "$0", args[2]};
+  write_inst_string(output, "slt", args_slt, num_args);
+  write_inst_string(output, "bne", args_bne, num_args);
+  return 2;
+}
+
 
 /* Writes the instruction in hexadecimal format to OUTPUT during pass #2.
    
@@ -261,7 +316,7 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args,
 
   int64_t offset = label_addr - (addr + 4);
   offset >>= 2;  // calculates the immediate value that will be offset field for branch instruction
-  if (!is_valid_signed_immediate(offset)) return -1;
+  if (!is_valid_signed_16_bit(offset)) return -1;
 
   uint32_t instruction = make_itype_instruction(opcode, rs, rt, offset);
   write_inst_hex(output, instruction);
@@ -302,7 +357,7 @@ int is_valid_register(int val) {
 } 
 
 
-int is_valid_signed_immediate(long int imm) {
+int is_valid_signed_16_bit(long int imm) {
   int16_t min  = INT16_MIN;
   int16_t max =  INT16_MAX;
   if (imm < min || imm > max) return 0;

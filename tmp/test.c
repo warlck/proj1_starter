@@ -45,28 +45,28 @@ int main() {
  //    free_table(tbl);
 
 	FILE *test = fopen("test", "w");
-	char *name = "jal";
+	char *name = "blt";
 	char *rd = "$s0";
 	char *rs = "$a0";
 	char *rt = "-100"; 
-	char* args[3] = {"fib", "$a0", "fib"};
+	char* args[3] = {"$s0", "$a0", "fib"};
 
 	// long int  num = -1;
 	// // num = UINT16_MAX;
 	// printf("size of uint16_t is %lu\n", sizeof(num));
 	// printf("uint16 max is %ld \n", num);
 
-	SymbolTable *symtbl = create_table(SYMTBL_UNIQUE_NAME);
-    add_to_table(symtbl, "fib", 0x00400024);
-	SymbolTable *reltbl = create_table(SYMTBL_UNIQUE_NAME);
-	size_t num_args = 1;
-	uint32_t addr = 0x00400004;
-	printf("imm is %d\n", (0x00400024 - (addr + 4))>>2 );
-	int res = translate_inst(test, name, args, num_args, addr, symtbl, reltbl);
+	// SymbolTable *symtbl = create_table(SYMTBL_UNIQUE_NAME);
+ //    add_to_table(symtbl, "fib", 0x00400024);
+	// SymbolTable *reltbl = create_table(SYMTBL_UNIQUE_NAME);
+	size_t num_args = 3;
+	// uint32_t addr = 0x00400004;
+	// printf("imm is %d\n", (0x00400024 - (addr + 4))>>2 );
+	int res = write_pass_one(test, name, args, num_args);
 	printf  ("result of execution is %d\n",res);
-	printf("fib address in relocation table %08llx\n",get_addr_for_symbol(reltbl, args[0]));
-	free_table(symtbl);
-	free_table(reltbl);
+	// printf("fib address in relocation table %08llx\n",get_addr_for_symbol(reltbl, args[0]));
+	// free_table(symtbl);
+	// free_table(reltbl);
 	fclose(test);
 
 
