@@ -1,0 +1,10 @@
+addiu $v0 $0 10
+addiu $a1 $0 -6000
+lui $at 0x00000001
+ori $a2 $at 0x00003880
+lui $at 0x0000b0ba
+ori $a3 $at 0x0000cafe
+slt $at $t3 $a0
+bne $at $0 label1
+slt $at $sp $v0
+bne $at $0 label2

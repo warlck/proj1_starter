@@ -10,7 +10,7 @@
 
 const int MAX_ARGS = 3;
 const int BUF_SIZE = 1024;
-const char* IGNORE_CHARS = " \f\n\r\t\v,()";
+const char* DELIMITERS = " ()\t\n\r\v\f,";
 
 /*******************************
  * Helper Functions
@@ -120,8 +120,51 @@ static int add_if_label(uint32_t input_line, char* str, uint32_t byte_offset,
    it should return 0.
  */
 int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
-    /* YOUR CODE HERE */
-    return -1;
+    char buf[BUF_SIZE];
+    int res = 0;
+    int line_number = 0;
+    int byte_offset = 0;
+
+    while (fgets(buf, BUF_SIZE, input)) {
+        line_number += 1;
+        skip_comment(buf);
+
+        char *name = strtok(buf, DELIMITERS);
+        if (!name) continue;
+        // printf(" name is %s, length is %d\n", name, strlen(name)); 
+        int err = add_if_label(line_number, name, byte_offset, symtbl);
+        if (err == -1) {
+            res = -1;
+            continue;
+        } else if (err == 1)  {
+            name = strtok(NULL, DELIMITERS);
+        }
+
+        if (!name) continue;
+
+        char* args[MAX_ARGS];
+        int num_args = 0;
+        char *arg;
+        int i = 0;
+        while ((arg  = strtok(NULL, DELIMITERS))) {
+            num_args++;
+            if (num_args > MAX_ARGS) {
+                raise_extra_arg_error(line_number, arg);
+                break;
+            }
+            args[i++] = arg;
+        }
+        
+        int offset = 0;
+        if (num_args <= MAX_ARGS) {
+            // printf("byte_offset is  %d ",  byte_offset);
+            // write_inst_string(stdout, name, args, num_args);
+            offset = write_pass_one(output, name, args, num_args);
+        }
+        byte_offset += offset * 4;
+    }
+
+    return res;
 }
 
 /* Reads an intermediate file and translates it into machine code. You may assume:
@@ -135,13 +178,17 @@ int pass_one(FILE* input, FILE* output, SymbolTable* symtbl) {
    the document, and at the end, return -1. Return 0 if no errors were encountered. */
 int pass_two(FILE *input, FILE* output, SymbolTable* symtbl, SymbolTable* reltbl) {
     /* YOUR CODE HERE */
-
+    int res = 0;
     // Since we pass this buffer to strtok(), the chars here will GET CLOBBERED.
     char buf[BUF_SIZE];
+    int line_number = 1;
+    int byte_offset = 0;
     // Store input line number / byte offset below. When should each be incremented?
-
     // First, read the next line into a buffer.
+    while(fgets(buf, BUF_SIZE, input)) {
 
+    char *name = strtok(buf, DELIMITERS);
+    if (!name) continue;
     // Next, use strtok() to scan for next character. If there's nothing,
     // go to the next line.
 
@@ -150,14 +197,32 @@ int pass_two(FILE *input, FILE* output, SymbolTable* symtbl, SymbolTable* reltbl
     // so you don't need to worry about that here.
     char* args[MAX_ARGS];
     int num_args = 0;
+    for (int i = 0; i < MAX_ARGS; i++) {
+        char *arg;
+        arg = strtok(NULL, DELIMITERS);
+        if (!arg) break;
 
+        num_args++;
+        args[i] = arg;
+    }
+
+
+
+    int err = translate_inst(output, name, args, num_args, byte_offset, symtbl, reltbl);
+    if (err == -1) {
+        res = err;
+        raise_inst_error(line_number, name, args, num_args);
+    }
+
+    line_number += 1;
+    byte_offset += 4;
     // Use translate_inst() to translate the instruction and write to output file.
     // If an error occurs, the instruction will not be written and you should call
     // raise_inst_error(). 
 
     // Repeat until no more characters are left, and the return the correct return val
-
-    return -1;
+    }
+    return res;
 }
 
 /*******************************

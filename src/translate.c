@@ -56,9 +56,10 @@ int write_li(FILE *output, char **args, int num_args)  {
   int32_t min  = INT32_MIN;
   int32_t max =  INT32_MAX;
   int32_t immediate;
-  int err = translate_num(&immediate, args[1], min, max);
 
-  if (err == -1) return 0;
+  int err_unsigned = translate_num(&immediate, args[1], 0, UINT32_MAX);
+  int err_signed = translate_num(&immediate, args[1], min, max);
+  if (err_signed == -1 && err_unsigned == -1) return 0;
 
   if (is_valid_signed_16_bit(immediate)) { 
     char *name = "addiu";
@@ -74,19 +75,21 @@ int write_li(FILE *output, char **args, int num_args)  {
   char *name = "lui";
   uint32_t imm = immediate & 0xffff0000;
   imm >>= 16;
+
   char lui_imm_str[32];
-  int n  = sprintf(lui_imm_str, "%08x", imm);
+  int n  = sprintf(lui_imm_str, "0x%08x", imm);
   if (n < 0) return 0;
 
   char *args_lui[3] = {"$at", lui_imm_str};
   num_args = 2;
+
   write_inst_string(output, name, args_lui, num_args);
 
   // prepare the ori args and write it down to output
   name = "ori";
   imm = immediate & 0x0000ffff;
   char ori_imm_str[32];
-  int m = sprintf(ori_imm_str, "%08x", imm);
+  int m = sprintf(ori_imm_str, "0x%08x", imm);
   if (m < 0) return 0;
 
   char *args_ori[3] = {args[0], "$at", ori_imm_str};
@@ -99,8 +102,8 @@ int write_li(FILE *output, char **args, int num_args)  {
 
 int write_blt(FILE *output, char **args, int num_args) {
   if (num_args!= 3) return 0;
-  char *args_slt[3] = {"$t0", args[0], args[1]};
-  char *args_bne[3] = {"$t0", "$0", args[2]};
+  char *args_slt[3] = {"$at", args[0], args[1]};
+  char *args_bne[3] = {"$at", "$0", args[2]};
   write_inst_string(output, "slt", args_slt, num_args);
   write_inst_string(output, "bne", args_bne, num_args);
   return 2;
@@ -196,9 +199,13 @@ int write_shift(uint8_t funct, FILE* output, char** args, size_t num_args) {
   int rs = 0;
   int rd = translate_reg(args[0]);
   int rt = translate_reg(args[1]);
-  int err = translate_num(&shamt, args[2], 0, 31);
 
-  if (err == -1) return -1;
+  int valid_register = 1;
+  valid_register &= is_valid_register(rt);
+  valid_register &= is_valid_register(rd);
+
+  int err = translate_num(&shamt, args[2], 0, 31);
+  if (err == -1 || !valid_register) return -1;
 
   uint32_t instruction = make_rtype_instruction(funct, rd, rs, rt, shamt);
   write_inst_hex(output, instruction);
@@ -242,9 +249,14 @@ int write_signed_imm(uint8_t opcode, FILE* output, char** args, size_t num_args)
   int16_t max =  INT16_MAX; // max signed 16 bit integer
   int rt = translate_reg(args[0]);
   int rs = translate_reg(args[1]);
-  int err = translate_num(&imm, args[2], min, max);
 
-  if (err == -1) return -1;
+  int valid_register = 1;
+  valid_register &= is_valid_register(rt);
+  valid_register &= is_valid_register(rs);
+
+  int err = translate_num(&imm, args[2], min, max);
+  if (err == -1 || !valid_register) return -1;
+
   uint32_t instruction = make_itype_instruction(opcode, rs, rt, imm);
   write_inst_hex(output, instruction);
   return 0;
@@ -260,11 +272,17 @@ int write_ori(uint8_t opcode, FILE* output, char** args, size_t num_args) {
 int write_unsigned_imm(uint8_t opcode, FILE* output, char** args, size_t num_args) {
   if (num_args != 3) return -1;
   uint16_t max = UINT16_MAX; 
+ 
   long int imm;
   int rt = translate_reg(args[0]);
   int rs = translate_reg(args[1]);
+
+  int valid_register = 1;
+  valid_register &= is_valid_register(rt);
+  valid_register &= is_valid_register(rs);
+
   int err  = translate_num(&imm, args[2], 0, max);
-  if (err == -1) return -1;
+  if (err == -1 || !valid_register) return -1;
 
   uint32_t instruction = make_itype_instruction(opcode, rs, rt, imm);
   write_inst_hex(output, instruction);
@@ -309,6 +327,12 @@ int write_branch(uint8_t opcode, FILE* output, char** args, size_t num_args,
   if (num_args != 3) return -1;
   int rs = translate_reg(args[0]);
   int rt = translate_reg(args[1]);
+
+  int valid_register = 1;
+  valid_register &= is_valid_register(rt);
+  valid_register &= is_valid_register(rs);
+
+  if(!valid_register) return -1;
 
   char *label = args[2];
   int64_t label_addr = get_addr_for_symbol(symtbl, label);

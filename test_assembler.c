@@ -555,7 +555,7 @@ void test_translate_4() {
     res  = write_pass_one(test, name, args_blt, num_args);
     CU_ASSERT_EQUAL(res, 2);
     fclose(test);
-    compare_written_instruction_to("slt $t0 $s0 $a0");
+    compare_written_instruction_to("slt $at $s0 $a0");
 
 
 }

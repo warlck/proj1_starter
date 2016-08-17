@@ -1,7 +1,7 @@
 # Comment here
 	addu $v0, $a0, $a1
 	or $a2, $a3, $t0			# comments # comments
-	
+
 	jr $t1
 	slt $t2, $t3, $s0
 	
