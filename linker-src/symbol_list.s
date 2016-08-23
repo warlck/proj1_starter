@@ -48,7 +48,29 @@
 # Returns:  address of symbol if found or -1 if not found
 #------------------------------------------------------------------------------
 addr_for_symbol:
+	addiu $sp, $sp, -12
+	sw $ra, 8($sp)
+	sw $a1, 4($sp)
+	sw $s0, 0($sp)
+loop:
 	beq $a0, $0, addr_not_found
+	addiu $s0, $a0, 0
+	lw $a0, 4($a0) # save the contents of symbol's name field 
+	lw $a1, 4($sp)
+	jal streq
+	beq $v0, $0, addr_found
+	addiu $a0, $s0, 0
+	lw $a0, 8($a0)
+	j loop
+addr_found:
+	lw $v0, 0($s0)
+	j routine_end
+addr_not_found:
+	addiu $v0, $0, -1   
+routine_end:
+	lw $s0, 0($sp)
+	lw $ra, 8($sp)
+	addiu $sp, $sp, 12
 	jr $ra
 	
 #------------------------------------------------------------------------------
@@ -70,7 +92,32 @@ addr_for_symbol:
 # Returns: the new list
 #------------------------------------------------------------------------------
 add_to_list:	
-	# YOUR CODE HERE
+	addiu $sp, $sp, -16
+	sw $ra, 12($sp) # save $ra
+	sw $a2, 8($sp)
+	sw $a1, 4($sp)
+	sw $a0, 0($sp)
+
+	jal new_node # create new node and save its address in $v0
+	addiu $t0, $v0, 0 # $t0 has address to new node
+
+	lw $a1, 4($sp) 
+	addiu $t1, $a1, 0 # $t1 contains the address of symbol
+	sw $t1, 0($t0) # store address of symbol into new node
+
+	lw $a2, 8($sp)
+	addiu $t1, $a2, 0
+	sw $t1, 4($t0) # store the pounter to name of new symbol
+
+	lw $a0, 0($sp)
+	sw $a0, 8($t0) # store pointer to list in new symbol
+
+	lw $a0, 0($sp)
+	lw $a1, 4($sp)
+	lw $a2, 8($sp)
+	lw $ra, 12($sp)
+	addiu $sp, $sp, 16
+	addiu $v0, $t0, 0
 	jr $ra
 
 ###############################################################################
