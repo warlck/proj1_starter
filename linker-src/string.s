@@ -27,7 +27,15 @@ tab:	.asciiz "\t"
 # Returns: the length of the string
 #------------------------------------------------------------------------------
 strlen:
-	# YOUR CODE HERE
+	li $t0, 0
+strlen_loop:
+	lb $t1, 0($a0)
+	beq $t1, $0, end_of_string
+	addiu $t0, $t0, 1
+	addiu $a0, $a0, 1
+	j strlen_loop
+end_of_string:
+	addiu $v0, $t0, 0
 	jr $ra
 
 #------------------------------------------------------------------------------
@@ -41,7 +49,25 @@ strlen:
 # Returns: the destination array
 #------------------------------------------------------------------------------
 strncpy:
-	# YOUR CODE HERE
+	lb $t4, 0($a1)
+	addiu $t1, $a0, 0
+	addiu $t2, $a1, 0
+strncpy_loop:
+	beq $a2, $0, end_of_count
+	bne $t4, $0, load_char
+	addiu $t0, $0, 0
+	j store_char
+load_char:
+	lb $t0, 0($t2)
+store_char:
+	sb $t0, 0($t1) 
+	addiu $t4, $t0, 0
+	addiu $t2, $t2, 1
+	addiu $t1, $t1, 1
+	addiu $a2, $a2, -1
+	j strncpy_loop
+end_of_count:
+	addiu $v0, $a0, 0
 	jr $ra
 
 #------------------------------------------------------------------------------
@@ -57,7 +83,28 @@ strncpy:
 # Returns: pointer to the copy of the string
 #------------------------------------------------------------------------------
 copy_of_str:
-	# YOUR CODE HERE
+	addiu $sp, $sp, -8
+	sw $ra, 4($sp)
+	sw $s1, 0($sp)
+
+	addiu $s1, $a0, 0  # store the contents of argument for later recovery
+
+	jal strlen
+	addiu $t0, $v0, 0  # stores the the lenght of string in $t0
+	addiu $t0, $t0, 1  # increment the len of string by 1 for null character
+
+	addiu $a0, $t0, 0  # set the $a0 value to num of bytes that need to be allocated
+	li $v0, 9
+	syscall  # $v0 contains the address of allocated space
+
+	addiu $a0, $v0, 0 # $a0 is allocated space address
+	addiu $a1, $s1, 0 # $a1 address of the string to copy
+	addiu $a2, $t0, 0 # $a2 is the number of characters to copy
+	jal strncpy # $v0 is address of copied string
+	lw $ra, 4($sp)
+	lw $s1, 0($sp)
+	addiu $sp, $sp, 8
+
 	jr $ra
 
 ###############################################################################

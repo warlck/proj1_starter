@@ -67,6 +67,7 @@ test_strncpy:
 	addiu $sp, $sp, -4
 	sw $ra, 0($sp)
 	print_str(test_strncpy_name)
+
 	
 	la $a0, test_buffer
 	la $a1, test_str1

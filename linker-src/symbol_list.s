@@ -48,7 +48,7 @@
 # Returns:  address of symbol if found or -1 if not found
 #------------------------------------------------------------------------------
 addr_for_symbol:
-	# YOUR CODE HERE
+	beq $a0, $0, addr_not_found
 	jr $ra
 	
 #------------------------------------------------------------------------------
