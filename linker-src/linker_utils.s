@@ -45,7 +45,15 @@ relocLabel: .asciiz ".relocation"
 # Returns: 1 if the instruction needs relocation, 0 otherwise.
 #------------------------------------------------------------------------------
 inst_needs_relocation:
-	# YOUR CODE HERE
+	li $t0, 0xFC000000 # mast to extract opcode field
+	and $t1, $a0, $t0 # $t1 contains most significat 6 bytes of the instruction
+	srl $t1, $t1, 26  # shifts opcode bytes to lest significant bytes
+	blt $t1, 2, does_not_need
+	bgt $t1, 3, does_not_need
+	li $v0, 1
+	jr $ra
+does_not_need:
+	li $v0, 0
 	jr $ra
 	
 #------------------------------------------------------------------------------
@@ -67,7 +75,35 @@ inst_needs_relocation:
 # Returns: the relocated instruction, or -1 if error
 #------------------------------------------------------------------------------
 relocate_inst:
-	# YOUR CODE HERE
+	addiu $sp, $sp, -20
+	sw $a3, 16($sp)
+	sw $a2, 12($sp)
+	sw $a1, 8($sp)
+	sw $a0, 4($sp)
+	sw $ra, 0($sp)
+
+	move $a0, $a3 
+	jal symbol_for_addr  # see if relative offset is in relocation table
+	beq $v0, $0, error  
+
+	lw $a0, 12($sp)
+	move $a1, $v0
+	jal addr_for_symbol # look for the symbol address in symbol table
+	beq $v0, -1, error
+
+
+	li $t0, 0xFC000000 # mask that extracts opcode field of the instruction
+	lw $t1, 4($sp) # load instruction 
+	and $t2, $t0, $t1 # extract the opcode field of the instruction
+
+	srl $v0, $v0, 2 # shift the address 2 bytes to use it in jump instruction
+	or $v0, $t2, $v0 # join address bytes with instruction opcode bytes and save
+	j rlct_end
+error:
+	li $v0, -1
+rlct_end:
+	lw $ra, 0($sp)
+	addiu $sp, $sp, 20
 	jr $ra
 
 ###############################################################################

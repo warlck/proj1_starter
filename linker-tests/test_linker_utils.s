@@ -30,14 +30,14 @@ sym_5:		.word 0xabc test_label5 sym_6
 sym_4:		.word 0x24 test_label4 sym_5
 sym_3:		.word 0xa8 test_label3 sym_4
 sym_2:		.word 0x0aaaaaac test_label2 sym_3
-sym_tbl:		.word 0x0ababab0 test_label1 sym_2
+sym_tbl:	.word 0x0ababab0 test_label1 sym_2
 
 # Relocation Table
 rel_5:		.word 40 test_label5 0
 rel_4:		.word 100 test_label8 rel_5
 rel_3:		.word 128 test_label2 rel_4
 rel_2:		.word 32 test_label1 rel_3
-rel_tbl:		.word 24 test_label3 rel_2
+rel_tbl:	.word 24 test_label3 rel_2
 
 .globl main
 .text

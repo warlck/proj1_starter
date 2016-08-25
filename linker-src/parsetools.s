@@ -14,7 +14,7 @@
 # function hex_to_str()
 #------------------------------------------------------------------------------
 # Writes a 32-bit number in hexadecimal format to a string buffer, followed by
-# the newline character and the NUL-terminator. The output must contain 8 digits
+# the newline character and the NULL-terminator. The output must contain 8 digits
 # so if neccessary put leading 0s in the buffer. Therefore, you should always 
 # be writing 10 characters (8 digits, 1 newline, 1 NUL-terminator).
 #
@@ -36,7 +36,29 @@
 # Returns: none
 #------------------------------------------------------------------------------
 hex_to_str:
-	# YOUR CODE HERE
+	li $t0, 0XF0000000 # loads a mask to extract indivdual hex values
+	li $t1, 28
+hex_to_str_loop:
+	beq $t0, $0, loop_end
+	and $t2, $t0, $a0 # apply mask to integer
+	srlv $t3, $t2, $t1
+	bleu $t3, 9, write_number
+write_char:
+	addiu $t3, $t3, 87
+	j continue
+write_number:
+	addiu $t3, $t3, 48
+continue:
+	sb $t3, 0($a1)
+	addiu $a1, $a1, 1
+	srl $t0, $t0, 4
+	sub $t1, $t1, 4
+	j hex_to_str_loop
+loop_end:
+	addiu $t3, $0, 10
+	sb $t3, 0($a1)
+	addiu $a1, $a1, 1
+	sb $0, 0($a1) 
 	jr $ra
 
 ###############################################################################
