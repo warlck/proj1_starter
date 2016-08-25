@@ -47,7 +47,7 @@
 #
 # Returns:  address of symbol if found or -1 if not found
 #------------------------------------------------------------------------------
-addr_for_symbol:
+addr_for_symbol: # Begin addr_for_symbol
 	addiu $sp, $sp, -12
 	sw $ra, 8($sp)
 	sw $a1, 4($sp)
@@ -71,7 +71,7 @@ routine_end:
 	lw $s0, 0($sp)
 	lw $ra, 8($sp)
 	addiu $sp, $sp, 12
-	jr $ra
+	jr $ra # End addr_for_symbol
 	
 #------------------------------------------------------------------------------
 # function add_to_list()
@@ -91,34 +91,38 @@ routine_end:
 #
 # Returns: the new list
 #------------------------------------------------------------------------------
-add_to_list:	
-	addiu $sp, $sp, -16
+add_to_list:	# Begin add_to_list()
+	addiu $sp, $sp, -20
+	sw $s0, 16($sp)
 	sw $ra, 12($sp) # save $ra
 	sw $a2, 8($sp)
 	sw $a1, 4($sp)
 	sw $a0, 0($sp)
 
 	jal new_node # create new node and save its address in $v0
-	addiu $t0, $v0, 0 # $t0 has address to new node
+	addiu $s0, $v0, 0 # $s0 has address to new node
 
 	lw $a1, 4($sp) 
-	addiu $t1, $a1, 0 # $t1 contains the address of symbol
-	sw $t1, 0($t0) # store address of symbol into new node
+	sw $a1, 0($s0) # store address of symbol into new node
 
-	lw $a2, 8($sp)
-	addiu $t1, $a2, 0
-	sw $t1, 4($t0) # store the pounter to name of new symbol
+
+
+	lw $a0, 8($sp)
+	jal copy_of_str # copies the string and returns the address of string copy
+	sw $v0, 4($s0) # store the pointer to name of new symbol
 
 	lw $a0, 0($sp)
-	sw $a0, 8($t0) # store pointer to list in new symbol
+	sw $a0, 8($s0) # store pointer to list in new symbol
 
+	move $v0, $s0
 	lw $a0, 0($sp)
 	lw $a1, 4($sp)
 	lw $a2, 8($sp)
 	lw $ra, 12($sp)
-	addiu $sp, $sp, 16
-	addiu $v0, $t0, 0
-	jr $ra
+	lw $s0, 16($sp) 
+	addiu $sp, $sp, 20
+	
+	jr $ra # End add_to_list()
 
 ###############################################################################
 #                 DO NOT MODIFY ANYTHING BELOW THIS POINT                       
@@ -136,8 +140,8 @@ add_to_list:
 #
 # Returns: a pointer to the name if found or NULL if not found
 #------------------------------------------------------------------------------
-symbol_for_addr:
-	beq $a0, $0, symbol_not_found	# Begin symbol_for_addr
+symbol_for_addr: # Begin symbol_for_addr
+	beq $a0, $0, symbol_not_found	
 	lw $t0, 0($a0)
 	beq $t0, $a1, symbol_found
 	lw $a0, 8($a0)
@@ -147,7 +151,7 @@ symbol_found:
 	jr $ra
 symbol_not_found:
 	li $v0, 0
-	jr $ra			# End addr_for_symbol
+	jr $ra		# End symbol_for_addr	
 
 #------------------------------------------------------------------------------
 # function print_list() - DO NOT MODIFY THIS FUNCTION
